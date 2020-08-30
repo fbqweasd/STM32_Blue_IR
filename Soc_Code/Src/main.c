@@ -41,23 +41,58 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+TIM_HandleTypeDef htim6;
+
 UART_HandleTypeDef huart4;
 
 /* USER CODE BEGIN PV */
 
+void Delay_us_Timer(int input);
+
+uint32_t Get_IR(void)
+{
+	int count = 0;
+	uint32_t data;
+	
+	while  ( HAL_GPIO_ReadPin  ( GPIOA ,  GPIO_PIN_9 ));
+	while  ( ! ( HAL_GPIO_ReadPin  ( GPIOA ,  GPIO_PIN_9 )));
+	
+	for (int i=0; i<32; i++)
+	{
+		count=0;
+		while (!(HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_9))); // wait for pin to go high.. this is 562.5us LOW
+
+		while ((HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_9)))  // count the space length while the pin is high
+	 {
+		count++;
+		Delay_us_Timer(100);
+	 }
+
+	 if (count > 12) // if the space is more than 1.2 ms
+	 {
+		data |= (1UL << (31-i));   // write 1
+	 }
+
+	 else data &= ~(1UL << (31-i));  // write 0
+	}
+}
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_UART4_Init(void);
+static void MX_TIM6_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
 unsigned char RxBuffer[1];
+int Pin_Status = 0;
+uint32_t Timer_count;
 /* USER CODE END 0 */
 
 /**
@@ -67,7 +102,7 @@ unsigned char RxBuffer[1];
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	int value= 10;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -76,7 +111,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+	uint32_t ReadIR;
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -89,8 +124,9 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_UART4_Init();
+  MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
-
+	HAL_TIM_Base_Start_IT(&htim6);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -98,27 +134,25 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+		ReadIR = Get_IR();
+		ReadIR;
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-	 if(huart -> Instance == huart4.Instance)
-	 {
-		  HAL_UART_Transmit(&huart4, RxBuffer, 1, 2);
-	 
-			if(RxBuffer[0] == 'A'){
-				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);
-			}
-			else if(RxBuffer[0] == 'B'){
-				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);	
-			}
-	 
-			 HAL_UART_Receive_IT(&huart4, RxBuffer, 1);
-	 }
+     if(htim -> Instance == TIM6)
+     {
+				Timer_count++;
+     }
+}
+
+void Delay_us_Timer(int input)
+{
+	Timer_count = 0;
+	while(Timer_count <= input);
 }
 
 /**
@@ -173,6 +207,44 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief TIM6 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM6_Init(void)
+{
+
+  /* USER CODE BEGIN TIM6_Init 0 */
+
+  /* USER CODE END TIM6_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM6_Init 1 */
+
+  /* USER CODE END TIM6_Init 1 */
+  htim6.Instance = TIM6;
+  htim6.Init.Prescaler = 72;
+  htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim6.Init.Period = 0;
+  htim6.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM6_Init 2 */
+
+  /* USER CODE END TIM6_Init 2 */
+
 }
 
 /**
@@ -236,13 +308,9 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : PA9 */
   GPIO_InitStruct.Pin = GPIO_PIN_9;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
 }
 

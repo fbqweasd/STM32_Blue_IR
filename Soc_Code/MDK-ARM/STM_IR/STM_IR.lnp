@@ -5,8 +5,6 @@
 "stm_ir\stm32l4xx_hal_msp.o"
 "stm_ir\stm32l4xx_hal_tim.o"
 "stm_ir\stm32l4xx_hal_tim_ex.o"
-"stm_ir\stm32l4xx_hal_uart.o"
-"stm_ir\stm32l4xx_hal_uart_ex.o"
 "stm_ir\stm32l4xx_hal.o"
 "stm_ir\stm32l4xx_hal_i2c.o"
 "stm_ir\stm32l4xx_hal_i2c_ex.o"
@@ -22,6 +20,8 @@
 "stm_ir\stm32l4xx_hal_pwr_ex.o"
 "stm_ir\stm32l4xx_hal_cortex.o"
 "stm_ir\stm32l4xx_hal_exti.o"
+"stm_ir\stm32l4xx_hal_uart.o"
+"stm_ir\stm32l4xx_hal_uart_ex.o"
 "stm_ir\system_stm32l4xx.o"
 --library_type=microlib --strict --scatter "STM_IR\STM_IR.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
