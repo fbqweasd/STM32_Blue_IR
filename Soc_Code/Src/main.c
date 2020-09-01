@@ -65,7 +65,7 @@ uint32_t Get_IR(void)
 		while ((HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_9)))  // count the space length while the pin is high
 	 {
 		count++;
-		Delay_us_Timer(100);
+		Delay_us_Timer(10);
 	 }
 
 	 if (count > 12) // if the space is more than 1.2 ms
@@ -75,6 +75,7 @@ uint32_t Get_IR(void)
 
 	 else data &= ~(1UL << (31-i));  // write 0
 	}
+	return data;
 }
 /* USER CODE END PV */
 
@@ -93,6 +94,7 @@ static void MX_TIM6_Init(void);
 unsigned char RxBuffer[1];
 int Pin_Status = 0;
 uint32_t Timer_count;
+uint32_t ReadIR;
 /* USER CODE END 0 */
 
 /**
@@ -102,7 +104,6 @@ uint32_t Timer_count;
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	int value= 10;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -111,7 +112,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-	uint32_t ReadIR;
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -131,12 +132,17 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+		
   while (1)
   {
     /* USER CODE END WHILE */
-		ReadIR = Get_IR();
-		ReadIR;
+
     /* USER CODE BEGIN 3 */
+		ReadIR = Get_IR();
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);
+		Delay_us_Timer(1000);
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);		
+		ReadIR = 0;
   }
   /* USER CODE END 3 */
 }
@@ -145,14 +151,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
      if(htim -> Instance == TIM6)
      {
-				Timer_count++;
+          Timer_count++;
      }
 }
 
 void Delay_us_Timer(int input)
 {
 	Timer_count = 0;
-	while(Timer_count <= input);
+	while(input < Timer_count);
+	Timer_count = 0;	
 }
 
 /**
@@ -227,7 +234,7 @@ static void MX_TIM6_Init(void)
 
   /* USER CODE END TIM6_Init 1 */
   htim6.Instance = TIM6;
-  htim6.Init.Prescaler = 72;
+  htim6.Init.Prescaler = 7200;
   htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim6.Init.Period = 0;
   htim6.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
